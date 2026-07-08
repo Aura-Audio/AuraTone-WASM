@@ -1,0 +1,44 @@
+name: Compile WASM and Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout repository
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Install Emscripten
+      - name: Install Emscripten
+        run: |
+          git clone https://github.com/emscripten-core/emsdk.git
+          cd emsdk
+          ./emsdk install latest
+          ./emsdk activate latest
+          source ./emsdk_env.sh
+          echo "::add-path::$(pwd)/emsdk/upstream/emscripten"
+
+      # Compile C to WASM
+      - name: Compile WASM
+        run: |
+          mkdir -p wasm
+          emcc src/tone_generator.c -o wasm/tone_generator.wasm \
+            -s WASM=1 \
+            -s EXPORTED_FUNCTIONS='["_generate_tone", "_malloc", "_free"]' \
+            -s EXPORTED_RUNTIME_METHODS='["ccall", "cwrap"]' \
+            -s MODULARIZE=1 \
+            -s ALLOW_MEMORY_GROWTH=1
+
+      # Deploy to Cloudflare Pages
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: wasm-tone-generator
+          directory: .
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
