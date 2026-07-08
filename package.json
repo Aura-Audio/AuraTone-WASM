@@ -1,0 +1,12 @@
+{
+  "name": "wasm-tone-generator",
+  "version": "1.0.0",
+  "description": "WASM Tone Generator with Web Audio API",
+  "scripts": {
+    "serve": "npx http-server -p 8000 -c-1",
+    "compile-wasm": "emcc src/tone_generator.c -o wasm/tone_generator.wasm -s WASM=1 -s EXPORTED_FUNCTIONS='[\"_generate_tone\", \"_malloc\", \"_free\"]' -s MODULARIZE=1 -s ALLOW_MEMORY_GROWTH=1"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
